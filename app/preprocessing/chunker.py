@@ -1,6 +1,14 @@
 from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-path = "test_data/Vincent_Bacalso_CV2.pdf"
-loader = PyMuPDFLoader(path)
-docs = loader.load()
-print(docs[0].page_content)
+def chunker (path: str) -> list:
+    loader = PyMuPDFLoader(path)
+    docs = loader.load()
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=70)
+    contents = ""
+    for doc in docs: 
+        contents += doc.page_content + "\n" 
+    chunk = text_splitter.split_text(contents)
+    return chunk
+    
+chunker("app/preprocessing/sample.pdf")
