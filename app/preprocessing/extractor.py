@@ -1,5 +1,11 @@
 from langchain_community.document_loaders import PyMuPDFLoader
 
+SECTION_KEYWORDS = {
+    "education": ["education", "degree", "university", "college", "school", "bachelors", "masters", "phd", "diploma"],
+    "experience": ["experience", "work", "employment", "job", "position", "role", "career", "professional", "internship", "intern"],  
+    "skills": ["skills", "abilities", "competencies", "expertise"],
+    "certifications": ["certification", "certified", "license", "accreditation"],
+}
 
 def PDF_extractor (path: str) -> str:
     loader = PyMuPDFLoader(path)
@@ -16,7 +22,6 @@ def text_cleaner(raw_text: str)-> str:
     for bullet in bullet_chars:
         cleaned_text = cleaned_text.replace(bullet, '-')
 
-    cleaned_text = cleaned_text.replace("\n", " ")
     cleaned_text = cleaned_text.replace("\r", " ")
     cleaned_text = cleaned_text.replace("\t", " ")
     cleaned_text = cleaned_text.replace('\xa0', ' ')
@@ -27,11 +32,31 @@ def text_cleaner(raw_text: str)-> str:
     cleaned_text = cleaned_text.replace('|', ' ')
     cleaned_text = cleaned_text.lower()
 
+    # print(cleaned_text.strip())
     return cleaned_text.strip()
 
+def text_to_line(text: str) -> list:
+    return text.split('\n')
+
+def text_to_structured_sections(text_list: list, sections: list) -> dict:
+    structured_data = {"education": [], "experience": [], "skills": [], "certifications": [], "General": []}
+    for keyword in SECTION_KEYWORDS:
+        for line in text_list:
+            if any(word in line for word in SECTION_KEYWORDS[keyword]):
+                structured_data[keyword].append(line)
+            else:
+                structured_data["General"].append(line)
+    print(structured_data)
+    return structured_data
+    
+    
 
 
+# Example usage:
 # PDF_extractor("test_data/Vincent_Bacalso_CV2.pdf")
-text_cleaner(PDF_extractor("test_data/Vincent_Bacalso_CV2.pdf"))
+text = PDF_extractor("test_data/Vincent_Bacalso_CV2.pdf")
+text_cleaned = text_cleaner(text)
+text_lines = text_to_line(text_cleaned)
+structured_output = text_to_structured_sections(text_lines, SECTION_KEYWORDS)
 
     
