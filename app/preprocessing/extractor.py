@@ -1,5 +1,6 @@
-from langchain_community.document_loaders import PyMuPDFLoader
-
+# from langchain_community.document_loaders import PyMuPDFLoader
+import fitz
+from fastapi import UploadFile, File
 SECTION_KEYWORDS = {
     "education": ["education", "degree", "university", "college", "school", "bachelors", "masters", "phd", "diploma"],
     "experience": ["experience", "work", "employment", "job", "position", "role", "career", "professional", "internship", "intern"],  
@@ -7,12 +8,13 @@ SECTION_KEYWORDS = {
     "certifications": ["certification", "certified", "license", "accreditation"],
 }
 
-def PDF_extractor (path: str) -> str:
-    loader = PyMuPDFLoader(path)
-    docs = loader.load()
+async def PDF_extractor (file: UploadFile = File(...)) -> str:
+    contents = await file.read()
+    doc = fitz.open(stream=contents, filetype="pdf")
+
     contents = ""
-    for doc in docs: 
-        contents += doc.page_content 
+    for page in doc: 
+        contents += page.get_text()
     return contents
 
 def text_cleaner(raw_text: str)-> str:
@@ -48,14 +50,36 @@ def text_to_structured_sections(text_list: list, sections: list) -> dict:
             break
     return structured_data
     
+def section_extractor(structured_data: dict) -> dict:
+    '''
+    Goal of this function is to extract meaningful information per structured sections
+    1. parse each value of key to dig deeper into each section to extract relevant, structured information 
+    2. return a dictionary with structured information per section
+
+    Example output:
+    {
+        "education": {"degree": "Bachelor of Science in Computer Science", 
+                      "institution": "Silliman University", 
+                      "year": "2021-2023"},
+        "experience": {"job_title": "Data Scientist", 
+                       "company": "Tech Company", 
+                       "duration": "2 years"},
+        ...
+    }
     
+    '''
+    education_info = {"degree": "", "institution": "", "year": ""}
+    experience_info = {"job_title": "", "company": "", "duration": ""}
+    skills_info = {"skills": []}
+    certifications_info = {"certifications": []}
+    general_info = {"name": "", "contact": "", "summary": ""}
 
 
 # Example usage:
-text = PDF_extractor("test_data/Vincent_Bacalso_CV2.pdf")
-text_cleaned = text_cleaner(text)
-text_lines = text_to_line(text_cleaned)
-structured_output = text_to_structured_sections(text_lines, SECTION_KEYWORDS)
-print(structured_output)
+# text = PDF_extractor("test_data/Vincent_Bacalso_CV2.pdf")
+# text_cleaned = text_cleaner(text)
+# text_lines = text_to_line(text_cleaned)
+# structured_output = text_to_structured_sections(text_lines, SECTION_KEYWORDS)
+# print(structured_output)
 
     
